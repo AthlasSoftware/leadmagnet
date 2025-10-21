@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email != null &&
+        (request.auth.token.email.matches('.*@athlas\\.io$') || 
+         request.auth.token.email.matches('.*@athlas\\.se$'));
+    }
+    // Allow reading and writing to leads collection with rate limiting
+    match /leads/{leadId} {
+      allow create: if request.auth == null 
+        && isValidLead(request.resource.data)
+        && resource == null;
+      // Admins may read leads
+      allow read: if isAdmin();
+    }
+    
+    // Allow reading and writing to analysis results with rate limiting
+    match /analyses/{analysisId} {
+      allow create: if request.auth == null 
+        && isValidAnalysis(request.resource.data)
+        && resource == null;
+      allow read: if request.auth == null 
+        && resource.data.sessionId == request.headers['x-session-id'];
+    }
+    
+    function isValidLead(data) {
+      return data.keys().hasAll(['name', 'email', 'website', 'timestamp'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.email is string && data.email.matches('.*@.*\\..*')
+        && data.website is string && data.website.size() > 0 && data.website.size() <= 500
+        && data.timestamp is timestamp;
+    }
+    
+    function isValidAnalysis(data) {
+      return data.keys().hasAll(['sessionId', 'website', 'results', 'timestamp'])
+        && data.sessionId is string && data.sessionId.size() > 0
+        && data.website is string && data.website.size() > 0
+        && data.results is map
+        && data.timestamp is timestamp;
+    }
+  }
+}

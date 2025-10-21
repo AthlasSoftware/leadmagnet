@@ -1,0 +1,22 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Apple Touch Icon - PULSE by Athlas -->
+  <rect width="180" height="180" rx="40" fill="#2563eb"/>
+  
+  <!-- Pulse wave icon (larger for Apple touch) -->
+  <path d="M30 90L50 90L62 60L90 120L118 68L130 90L150 90" 
+        stroke="white" 
+        stroke-width="8" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        fill="none"/>
+  
+  <!-- Gradient overlay -->
+  <defs>
+    <linearGradient id="appleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" rx="40" fill="url(#appleGradient)"/>
+</svg>
+

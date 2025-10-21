@@ -1,0 +1,47 @@
+{
+  "name": "athlas-leadmagnet",
+  "version": "1.0.0",
+  "description": "Professional lead magnet with website analysis for Athlas",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "export": "next export",
+    "build:functions": "npm run --prefix functions build",
+    "build:app": "next build",
+    "deploy": "npm run build:functions && npm run build:app && firebase deploy"
+  },
+  "dependencies": {
+    "firebase": "^10.12.5",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.14.0",
+    "@mui/icons-material": "^5.14.0",
+    "@mui/lab": "^5.0.0-alpha.143",
+    "axios": "^1.5.0",
+    "react-hook-form": "^7.45.0",
+    "react-hot-toast": "^2.4.1",
+    "framer-motion": "^10.16.0",
+    "cheerio": "^1.0.0-rc.12",
+    "lighthouse": "^11.0.0",
+    "puppeteer": "^21.0.0",
+    "jspdf": "^2.5.1",
+    "html2canvas": "^1.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.47.0",
+    "eslint-config-next": "^14.0.0",
+    "typescript": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
