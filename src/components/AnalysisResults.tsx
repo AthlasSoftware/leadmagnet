@@ -49,18 +49,7 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
   const theme = useTheme();
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const isAthlasWebsite = (() => {
-    try {
-      const u = new URL(website);
-      return u.hostname.replace(/^www\./, '') === 'athlas.io';
-    } catch {
-      return false;
-    }
-  })();
-
-  const displayedScore = isAthlasWebsite ? 100 : results.overview.overallScore;
-  const displayedScoreText = isAthlasWebsite ? 'Utmärkt' : getScoreText(results.overview.overallScore);
-
+  // Helpers declared before usage to avoid TDZ issues
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'success.main';
     if (score >= 60) return 'warning.main';
@@ -74,6 +63,18 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
     if (score >= 40) return 'Okej';
     return 'Behöver förbättring';
   };
+
+  const isAthlasWebsite = (() => {
+    try {
+      const u = new URL(website);
+      return u.hostname.replace(/^www\./, '') === 'athlas.io';
+    } catch {
+      return false;
+    }
+  })();
+
+  const displayedScore = isAthlasWebsite ? 100 : results.overview.overallScore;
+  const displayedScoreText = isAthlasWebsite ? 'Utmärkt' : getScoreText(results.overview.overallScore);
 
   const getIssueIcon = (type: 'error' | 'warning' | 'info') => {
     switch (type) {
