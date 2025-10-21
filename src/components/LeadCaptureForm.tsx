@@ -60,7 +60,10 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
     },
   });
 
+  const watchedName = watch('name');
+  const watchedEmail = watch('email');
   const watchedWebsite = watch('website');
+  const watchedConsent = watch('consent');
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
@@ -320,7 +323,12 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
                     variant="contained"
                     size="large"
                     loading={isSubmitting}
-                    disabled={!watchedWebsite?.trim()}
+                    disabled={
+                      !watchedName?.trim() ||
+                      !watchedEmail?.trim() ||
+                      !watchedWebsite?.trim() ||
+                      !watchedConsent
+                    }
                     sx={{
                       py: 2,
                       fontSize: '0.9rem',

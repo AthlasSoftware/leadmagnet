@@ -285,8 +285,8 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
           </Stack>
         </Paper>
 
-        {/* Quick Insights */}
-        {(results.overview.priorityIssues.length > 0 || results.overview.quickWins.length > 0) && (
+        {/* Quick Insights - hidden for athlas.io */}
+        {!isAthlasWebsite && (results.overview.priorityIssues.length > 0 || results.overview.quickWins.length > 0) && (
           <Grid container spacing={3} sx={{ mb: 4 }}>
             {results.overview.priorityIssues.length > 0 && (
               <Grid item xs={12} md={6}>
@@ -338,60 +338,63 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
           </Grid>
         )}
 
-        {/* Category Scores */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {categoryData.map((category, index) => (
-            <Grid item xs={12} md={4} key={category.key}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <Card sx={{ height: '100%', textAlign: 'center' }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ mb: 2 }}>
-                      {React.cloneElement(category.icon, {
-                        sx: { fontSize: 48, color: getScoreColor(category.score) }
-                      })}
-                    </Box>
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                      {category.title}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-                      {category.description}
-                    </Typography>
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="h4" sx={{ fontWeight: 'bold', color: getScoreColor(category.score) }}>
-                        {category.score}
+        {/* Category Scores - hidden for athlas.io */}
+        {!isAthlasWebsite && (
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {categoryData.map((category, index) => (
+              <Grid item xs={12} md={4} key={category.key}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <Card sx={{ height: '100%', textAlign: 'center' }}>
+                    <CardContent sx={{ p: 3 }}>
+                      <Box sx={{ mb: 2 }}>
+                        {React.cloneElement(category.icon, {
+                          sx: { fontSize: 48, color: getScoreColor(category.score) }
+                        })}
+                      </Box>
+                      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                        {category.title}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        av 100
+                      <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+                        {category.description}
                       </Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={category.score}
-                      sx={{
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: 'grey.200',
-                        '& .MuiLinearProgress-bar': {
-                          backgroundColor: getScoreColor(category.score),
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', color: getScoreColor(category.score) }}>
+                          {category.score}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          av 100
+                        </Typography>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={category.score}
+                        sx={{
+                          height: 8,
                           borderRadius: 4,
-                        },
-                      }}
-                    />
-                    <Typography variant="body2" sx={{ mt: 1, color: getScoreColor(category.score), fontWeight: 600 }}>
-                      {getScoreText(category.score)}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-        </Grid>
+                          backgroundColor: 'grey.200',
+                          '& .MuiLinearProgress-bar': {
+                            backgroundColor: getScoreColor(category.score),
+                            borderRadius: 4,
+                          },
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ mt: 1, color: getScoreColor(category.score), fontWeight: 600 }}>
+                        {getScoreText(category.score)}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        )}
 
-        {/* Detailed Results */}
+        {/* Detailed Results - hidden for athlas.io */}
+        {!isAthlasWebsite && (
         <Paper sx={{ p: 4, mb: 4 }}>
           <Typography variant="h4" sx={{ mb: 4, fontWeight: 600 }}>
             Detaljerade resultat
@@ -675,6 +678,7 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
             </AccordionDetails>
           </Accordion>
         </Paper>
+        )}
 
         {/* Call to Action */}
         <Paper sx={{ 
