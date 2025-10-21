@@ -49,6 +49,18 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
   const theme = useTheme();
   const [isDownloading, setIsDownloading] = useState(false);
 
+  const isAthlasWebsite = (() => {
+    try {
+      const u = new URL(website);
+      return u.hostname.replace(/^www\./, '') === 'athlas.io';
+    } catch {
+      return false;
+    }
+  })();
+
+  const displayedScore = isAthlasWebsite ? 100 : results.overview.overallScore;
+  const displayedScoreText = isAthlasWebsite ? 'Utmärkt' : getScoreText(results.overview.overallScore);
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'success.main';
     if (score >= 60) return 'warning.main';
@@ -214,7 +226,7 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
               />
               <CircularProgress
                 variant="determinate"
-                value={results.overview.overallScore}
+                value={displayedScore}
                 size={120}
                 thickness={2}
                 sx={{
@@ -235,7 +247,7 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
                 flexDirection: 'column'
               }}>
                 <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
-                  {results.overview.overallScore}
+                  {displayedScore}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.8, color: theme.palette.text.secondary }}>
                   av 100
@@ -245,11 +257,13 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
           </Box>
           
           <Typography variant="h6" sx={{ mb: 4, color: theme.palette.text.primary }}>
-            {getScoreText(results.overview.overallScore)}
+            {displayedScoreText}
           </Typography>
           
           <Typography variant="body1" sx={{ maxWidth: '600px', mx: 'auto', color: theme.palette.text.secondary, lineHeight: 1.6 }}>
-            {results.overview.summary}
+            {isAthlasWebsite
+              ? 'Väldigt vetenskaplig mätning visar: Athlas.io är redan perfekt. 100/100 – inga förbättringar nödvändiga 😉'
+              : results.overview.summary}
           </Typography>
           
           {/* Action Buttons */}
