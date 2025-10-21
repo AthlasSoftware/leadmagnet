@@ -12,6 +12,9 @@ import {
   Stack,
   Divider,
   useTheme,
+  Checkbox,
+  FormControlLabel,
+  Link as MuiLink,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import {
@@ -23,6 +26,7 @@ import {
   Speed,
 } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { getFirebaseDb } from '@/firebaseClient';
@@ -32,6 +36,7 @@ interface FormData {
   name: string;
   email: string;
   website: string;
+  consent: boolean;
 }
 
 interface Props {
@@ -51,6 +56,7 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
       name: '',
       email: '',
       website: '',
+      consent: false,
     },
   });
 
@@ -86,6 +92,7 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
             name: data.name.trim(),
             email: data.email.trim(),
             website: normalizedWebsite,
+            consent: !!data.consent,
           }),
         });
 
@@ -109,6 +116,7 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
             name: data.name.trim(),
             email: data.email.trim(),
             website: normalizedWebsite,
+            consent: !!data.consent,
             timestamp: serverTimestamp(),
           });
         } catch (clientErr) {
@@ -280,6 +288,33 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
                     )}
                   />
 
+              <Controller
+                name="consent"
+                control={control}
+                rules={{
+                  validate: (v) => v || 'Du behöver godkänna vår datapolicy',
+                }}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={<Checkbox {...field} checked={!!field.value} />}
+                    label={
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        Jag godkänner att Athlas behandlar mina uppgifter för att göra analysen,
+                        och att vi kan kontakta dig. Läs mer på{' '}
+                        <Link href="/data-policy" passHref legacyBehavior>
+                          <MuiLink target="_blank" rel="noopener noreferrer">vår datapolicy</MuiLink>
+                        </Link>.
+                      </Typography>
+                    }
+                  />
+                )}
+              />
+              {errors.consent && (
+                <Typography variant="caption" color="error">
+                  {String(errors.consent.message)}
+                </Typography>
+              )}
+
                   <LoadingButton
                     type="submit"
                     variant="contained"
@@ -300,8 +335,7 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
                     severity="info"
                   >
                     <Typography variant="body2">
-                      <strong>GDPR-säkert:</strong> Vi använder endast dina uppgifter för att skicka rapporten. 
-                      Inga uppgifter delas med tredje part.
+                      <strong>Integritet:</strong> Vi sparar dina uppgifter i max 15 dagar och tar sedan bort dem.
                     </Typography>
                   </Alert>
                 </Stack>

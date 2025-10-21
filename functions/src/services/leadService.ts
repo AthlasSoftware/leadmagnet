@@ -5,6 +5,7 @@ export interface LeadData {
   name: string;
   email: string;
   website: string;
+  consent?: boolean;
 }
 
 export async function saveLead(leadData: LeadData): Promise<string> {
@@ -17,6 +18,7 @@ export async function saveLead(leadData: LeadData): Promise<string> {
     source: 'website_analyzer',
     userAgent: '', // Could be added from request headers
     ipAddress: '', // Could be added from request (hashed for privacy)
+    consent: !!leadData.consent,
   };
 
   // Additional validation

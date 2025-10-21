@@ -40,14 +40,14 @@ router.get('/health', (_req, res) => {
 // Lead capture
 router.post('/capture-lead', rateLimitMiddleware, async (req, res) => {
 	try {
-		const { name, email, website } = req.body;
+		const { name, email, website, consent } = req.body;
 		if (!name || !email || !website) return res.status(400).json({ error: 'Name, email, and website are required fields' });
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(email)) return res.status(400).json({ error: 'Please provide a valid email address' });
 		let normalizedUrl = website.trim();
 		if (!normalizedUrl.startsWith('http')) normalizedUrl = 'https://' + normalizedUrl;
 		try { new URL(normalizedUrl); } catch { return res.status(400).json({ error: 'Please provide a valid website URL' }); }
-		const leadId = await saveLead({ name, email, website: normalizedUrl });
+		const leadId = await saveLead({ name, email, website: normalizedUrl, consent: !!consent });
 		return res.status(200).json({ success: true, leadId, message: 'Lead captured successfully' });
 	} catch (error) {
 		console.error('Error capturing lead:', error);
@@ -177,3 +177,29 @@ export const pulseapi = functions
 	.runWith({ timeoutSeconds: 300, memory: '1GB' })
 	.https
 	.onRequest(app);
+
+// Scheduled cleanup: delete leads and analyses older than 15 days
+export const scheduledCleanup = functions
+  .region('europe-west1')
+  .pubsub.schedule('every 24 hours')
+  .timeZone('Europe/Stockholm')
+  .onRun(async () => {
+    const db = admin.firestore();
+    const now = Date.now();
+    const cutoff = new Date(now - 15 * 24 * 60 * 60 * 1000);
+
+    const collections = ['leads', 'analyses', 'events'];
+    for (const coll of collections) {
+      const snap = await db.collection(coll).where('timestamp', '<', cutoff).get();
+      const batch = db.batch();
+      let count = 0;
+      snap.forEach((doc) => {
+        batch.delete(doc.ref);
+        count += 1;
+      });
+      if (count > 0) {
+        await batch.commit();
+      }
+    }
+    return null;
+  });

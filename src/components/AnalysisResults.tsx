@@ -23,7 +23,6 @@ import { LoadingButton } from '@mui/lab';
 import {
   ExpandMore,
   Download,
-  Email,
   AccessibilityNew,
   Search,
   Palette,
@@ -49,7 +48,6 @@ interface Props {
 const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver }) => {
   const theme = useTheme();
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'success.main';
@@ -141,39 +139,7 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
     }
   };
 
-  const sendEmailReport = async () => {
-    setIsSendingEmail(true);
-    try {
-      const response = await fetch(`/api/generate-report`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ website, results, email }),
-      });
-
-      if (!response.ok) {
-        throw 'Kunde inte skicka rapporten';
-      }
-
-      toast.success('📧 Rapporten skickad till din e-post!', {
-        duration: 5000,
-      });
-    } catch (error: any) {
-      // Fallback: generate client-side PDF
-      try {
-        await downloadReport();
-        toast.success('📄 Rapport genererad. E-post skickas inom kort.', {
-          duration: 5000,
-        });
-      } catch (fallbackErr) {
-        console.error('Email error:', error);
-        toast.error('❌ Kunde inte skicka rapporten. Försök ladda ner istället.', {
-          duration: 6000,
-        });
-      }
-    } finally {
-      setIsSendingEmail(false);
-    }
-  };
+  // Email-sändning borttagen enligt önskemål – endast nedladdning stöds
 
   const categoryData = [
     {
@@ -301,20 +267,6 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
               }}
             >
               Ladda ner PDF
-            </LoadingButton>
-            <LoadingButton
-              variant="outlined"
-              startIcon={<Email />}
-              loading={isSendingEmail}
-              onClick={sendEmailReport}
-              sx={{
-                minHeight: '48px',
-                px: 3,
-                fontWeight: 500,
-                fontSize: '0.9rem',
-              }}
-            >
-              Skicka till e-post
             </LoadingButton>
           </Stack>
         </Paper>
@@ -717,7 +669,7 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
           backgroundColor: theme.palette.mode === 'light' ? '#f8fafc' : '#0a0a0a',
         }}>
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 400, color: theme.palette.text.primary }}>
-            Behöver du hjälp med implementeringen?
+            Vill du öka er konvertering och förbättra resultatet snabbt?
           </Typography>
           <Typography variant="body1" sx={{ mb: 4, color: theme.palette.text.secondary, lineHeight: 1.6 }}>
             PULSE by{' '}
@@ -736,10 +688,23 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
             >
               Athlas.io
             </Box>
-            {' '}hjälper dig att genomföra förbättringarna snabbt och effektivt. 
-            Vi kombinerar spetskompetens inom utveckling, design, AI och digital marknadsföring.
+            {' '}hjälper dig att genomföra förbättringarna effektivt. 
+            Vi kombinerar utveckling, design, AI och digital marknadsföring – för mätbara resultat.
           </Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+            <Button
+              variant="contained"
+              size="large"
+              href="mailto:hello@athlas.io?subject=Boka%20genomg%C3%A5ng%20av%20min%20webbanalys"
+              sx={{
+                minHeight: '48px',
+                px: 3,
+                fontWeight: 600,
+                fontSize: '0.95rem',
+              }}
+            >
+              Boka kostnadsfri genomgång
+            </Button>
             <Button
               variant="contained"
               size="large"
@@ -752,6 +717,21 @@ const AnalysisResults: React.FC<Props> = ({ results, website, email, onStartOver
               }}
             >
               Kontakta oss för hjälp
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              href="https://athlas.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                minHeight: '48px',
+                px: 3,
+                fontWeight: 500,
+                fontSize: '0.9rem',
+              }}
+            >
+              Läs mer på Athlas.io
             </Button>
             <Button
               variant="outlined"

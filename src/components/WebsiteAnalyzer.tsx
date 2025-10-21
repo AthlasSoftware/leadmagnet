@@ -186,9 +186,23 @@ const WebsiteAnalyzer: React.FC<Props> = ({
       
       setTimeout(() => {
         onAnalysisComplete(results);
-        toast.success('🎉 Analys klar! Rapporten skickas till din e-post.', {
-          duration: 6000,
-        });
+        try {
+          const url = new URL(website);
+          const isAthlas = url.hostname.replace(/^www\./, '') === 'athlas.io';
+          if (isAthlas) {
+            toast.success('🥳 Athlas.io? Den sidan är redan perfekt! 100/100 😉', {
+              duration: 7000,
+            });
+          } else {
+            toast.success('🎉 Analys klar! Du kan ladda ner din PDF-rapport.', {
+              duration: 6000,
+            });
+          }
+        } catch {
+          toast.success('🎉 Analys klar! Du kan ladda ner din PDF-rapport.', {
+            duration: 6000,
+          });
+        }
       }, 1000);
 
     } catch (error: any) {
