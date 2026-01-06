@@ -1,11 +1,13 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { AnalysisResults } from './websiteAnalyzer';
 
-export async function generateReport(website: string, results: AnalysisResults): Promise<Buffer> {
+type Lang = 'sv' | 'en';
+
+export async function generateReport(website: string, results: AnalysisResults, lang: Lang = 'sv'): Promise<Buffer> {
   const pdfDoc = await PDFDocument.create();
   
   const { accessibility, seo, design, overview } = results;
-  const currentDate = new Date().toLocaleDateString('sv-SE', { 
+  const currentDate = new Date().toLocaleDateString(lang === 'en' ? 'en-GB' : 'sv-SE', { 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
@@ -56,7 +58,7 @@ export async function generateReport(website: string, results: AnalysisResults):
     color: colors.white,
   });
 
-  page1.drawText('Webbanalysrapport fran Athlas.io', {
+  page1.drawText(lang === 'en' ? 'Website Analysis Report from Athlas.io' : 'Webbanalysrapport från Athlas.io', {
     x: 50,
     y: height - 125,
     size: 14,
@@ -66,7 +68,7 @@ export async function generateReport(website: string, results: AnalysisResults):
 
   // Website info
   let yPos = height - 220;
-  page1.drawText('Analyserad webbplats:', {
+  page1.drawText(lang === 'en' ? 'Analyzed website:' : 'Analyserad webbplats:', {
     x: 50,
     y: yPos,
     size: 13,
@@ -84,7 +86,7 @@ export async function generateReport(website: string, results: AnalysisResults):
   });
 
   yPos -= 20;
-  page1.drawText(`Datum: ${currentDate}`, {
+  page1.drawText((lang === 'en' ? 'Date: ' : 'Datum: ') + currentDate, {
     x: 50,
     y: yPos,
     size: 10,
@@ -121,9 +123,19 @@ export async function generateReport(website: string, results: AnalysisResults):
   });
 
   yPos -= 80;
-  const scoreLabel = overview.overallScore >= 85 ? 'Utmarkt!' :
-                     overview.overallScore >= 70 ? 'Bra resultat!' :
-                     overview.overallScore >= 50 ? 'Godkant' : 'Behoer forbattring';
+  const scoreLabel = (() => {
+    if (lang === 'en') {
+      if (overview.overallScore >= 85) return 'Excellent!';
+      if (overview.overallScore >= 70) return 'Good results!';
+      if (overview.overallScore >= 50) return 'Acceptable';
+      return 'Needs improvement';
+    } else {
+      if (overview.overallScore >= 85) return 'Utmärkt!';
+      if (overview.overallScore >= 70) return 'Bra resultat!';
+      if (overview.overallScore >= 50) return 'Godkänt';
+      return 'Behöver förbättring';
+    }
+  })();
   
   page1.drawText(scoreLabel, {
     x: width / 2 - (scoreLabel.length * 5),
@@ -152,7 +164,7 @@ export async function generateReport(website: string, results: AnalysisResults):
 
   // Priority Issues
   if (overview.priorityIssues.length > 0 && yPos > 150) {
-    page1.drawText('PRIORITERADE FORBATTRINGAR', {
+    page1.drawText(lang === 'en' ? 'PRIORITY IMPROVEMENTS' : 'PRIORITERADE FÖRBÄTTRINGAR', {
       x: 50,
       y: yPos,
       size: 13,
@@ -180,7 +192,7 @@ export async function generateReport(website: string, results: AnalysisResults):
   const page2 = pdfDoc.addPage([595, 842]);
   yPos = height - 80;
 
-  page2.drawText('TILLGANGLIGHET', {
+  page2.drawText(lang === 'en' ? 'ACCESSIBILITY' : 'TILLGÄNGLIGHET', {
     x: 50,
     y: yPos,
     size: 22,
@@ -189,7 +201,7 @@ export async function generateReport(website: string, results: AnalysisResults):
   });
 
   yPos -= 25;
-  page2.drawText('Sakertstaller att alla kan anvanda din webbplats.', {
+  page2.drawText(lang === 'en' ? 'Ensures everyone can use your website.' : 'Säkerställer att alla kan använda din webbplats.', {
     x: 50,
     y: yPos,
     size: 11,
@@ -228,7 +240,7 @@ export async function generateReport(website: string, results: AnalysisResults):
 
   // Strengths
   if (accessibility.strengths.length > 0) {
-    page2.drawText('STYRKOR', {
+    page2.drawText(lang === 'en' ? 'STRENGTHS' : 'STYRKOR', {
       x: 50,
       y: yPos,
       size: 12,
@@ -255,7 +267,7 @@ export async function generateReport(website: string, results: AnalysisResults):
 
   // Issues
   if (accessibility.issues.length > 0) {
-    page2.drawText('FORBATTRINGSOMRADEN', {
+    page2.drawText(lang === 'en' ? 'AREAS FOR IMPROVEMENT' : 'FÖRBÄTTRINGSOMRÅDEN', {
       x: 50,
       y: yPos,
       size: 12,
@@ -287,7 +299,7 @@ export async function generateReport(website: string, results: AnalysisResults):
         color: colors.text,
       });
 
-      const recLines = splitTextIntoLines(`Rekommendation: ${issue.recommendation}`, 65);
+      const recLines = splitTextIntoLines((lang === 'en' ? 'Recommendation: ' : 'Rekommendation: ') + issue.recommendation, 65);
       page2.drawText(recLines[0].substring(0, 70), {
         x: 60,
         y: yPos - 30,
@@ -313,7 +325,7 @@ export async function generateReport(website: string, results: AnalysisResults):
   });
 
   yPos -= 25;
-  page3.drawText('Hjalper din webbplats synas battre i sokresultat.', {
+  page3.drawText(lang === 'en' ? 'Helps your site rank better in search results.' : 'Hjälper din webbplats synas bättre i sökresultat.', {
     x: 50,
     y: yPos,
     size: 11,
@@ -351,7 +363,7 @@ export async function generateReport(website: string, results: AnalysisResults):
   yPos -= 40;
 
   // Technical SEO
-  page3.drawText('TEKNISK SEO', {
+  page3.drawText(lang === 'en' ? 'TECHNICAL SEO' : 'TEKNISK SEO', {
     x: 50,
     y: yPos,
     size: 12,
@@ -361,11 +373,11 @@ export async function generateReport(website: string, results: AnalysisResults):
   yPos -= 18;
 
   const techItems = [
-    `- Laddningstid: ${seo.technical.loadSpeed.toFixed(1)}s`,
-    `- Mobiloptimerad: ${seo.technical.mobileOptimized ? 'Ja' : 'Nej'}`,
-    `- HTTPS: ${seo.technical.httpsEnabled ? 'Ja' : 'Nej'}`,
-    `- Robots.txt: ${seo.technical.hasRobotsTxt ? 'Ja' : 'Nej'}`,
-    `- Sitemap: ${seo.technical.hasSitemap ? 'Ja' : 'Nej'}`,
+    (lang === 'en' ? '- Load time: ' : '- Laddningstid: ') + `${seo.technical.loadSpeed.toFixed(1)}s`,
+    (lang === 'en' ? '- Mobile optimized: ' : '- Mobiloptimerad: ') + (seo.technical.mobileOptimized ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
+    '- HTTPS: ' + (seo.technical.httpsEnabled ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
+    '- Robots.txt: ' + (seo.technical.hasRobotsTxt ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
+    '- Sitemap: ' + (seo.technical.hasSitemap ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
   ];
 
   techItems.forEach(item => {
@@ -392,10 +404,10 @@ export async function generateReport(website: string, results: AnalysisResults):
   yPos -= 18;
 
   const onPageItems = [
-    `- Titel: ${seo.onPage.hasUniqueTitle ? 'Ja' : 'Nej'}`,
-    `- Meta description: ${seo.onPage.hasMetaDescription ? 'Ja' : 'Nej'}`,
-    `- H1: ${seo.onPage.hasH1 ? 'Ja' : 'Nej'}`,
-    `- Alt-text: ${seo.onPage.imagesWithAlt}/${seo.onPage.totalImages}`,
+    (lang === 'en' ? '- Unique title: ' : '- Titel: ') + (seo.onPage.hasUniqueTitle ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
+    '- Meta description: ' + (seo.onPage.hasMetaDescription ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
+    (lang === 'en' ? '- H1 heading: ' : '- H1: ') + (seo.onPage.hasH1 ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
+    (lang === 'en' ? '- Images with alt text: ' : '- Alt-text: ') + `${seo.onPage.imagesWithAlt}/${seo.onPage.totalImages}`,
   ];
 
   onPageItems.forEach(item => {
@@ -413,7 +425,7 @@ export async function generateReport(website: string, results: AnalysisResults):
 
   // SEO Issues
   if (seo.issues.length > 0) {
-    page3.drawText('FORBATTRINGSOMRADEN', {
+    page3.drawText(lang === 'en' ? 'AREAS FOR IMPROVEMENT' : 'FÖRBÄTTRINGSOMRÅDEN', {
       x: 50,
       y: yPos,
       size: 12,
@@ -445,7 +457,7 @@ export async function generateReport(website: string, results: AnalysisResults):
         color: colors.text,
       });
 
-      const recLines = splitTextIntoLines(`Rekommendation: ${issue.recommendation}`, 65);
+      const recLines = splitTextIntoLines((lang === 'en' ? 'Recommendation: ' : 'Rekommendation: ') + issue.recommendation, 65);
       page3.drawText(recLines[0].substring(0, 70), {
         x: 60,
         y: yPos - 30,
@@ -471,7 +483,7 @@ export async function generateReport(website: string, results: AnalysisResults):
   });
 
   yPos -= 25;
-  page4.drawText('Paverkar hur anvandare interagerar med webbplatsen.', {
+  page4.drawText(lang === 'en' ? 'Affects how users interact with your site.' : 'Påverkar hur användare interagerar med webbplatsen.', {
     x: 50,
     y: yPos,
     size: 11,
@@ -509,7 +521,7 @@ export async function generateReport(website: string, results: AnalysisResults):
   yPos -= 40;
 
   // Technical metrics
-  page4.drawText('TEKNISKA MATT', {
+  page4.drawText(lang === 'en' ? 'TECHNICAL METRICS' : 'TEKNISKA MÅTT', {
     x: 50,
     y: yPos,
     size: 12,
@@ -519,12 +531,12 @@ export async function generateReport(website: string, results: AnalysisResults):
   yPos -= 18;
 
   const designItems = [
-    `- Responsiv: ${design.responsive ? 'Ja' : 'Nej'}`,
-    `- Laddning: ${design.loadTime.toFixed(1)}s`,
-    `- Kontrast: ${design.colorContrast.sufficient ? 'OK' : 'Dalig'}`,
-    `- Typografi: ${design.typography.readable ? 'OK' : 'Dalig'}`,
-    `- Hierarki: ${design.typography.hierarchy ? 'Ja' : 'Nej'}`,
-    `- Navigation: ${design.navigation.clear ? 'Ja' : 'Nej'}`,
+    (lang === 'en' ? '- Responsive: ' : '- Responsiv: ') + (design.responsive ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
+    (lang === 'en' ? '- Load time: ' : '- Laddning: ') + `${design.loadTime.toFixed(1)}s`,
+    (lang === 'en' ? '- Color contrast: ' : '- Kontrast: ') + (design.colorContrast.sufficient ? (lang === 'en' ? 'OK' : 'OK') : (lang === 'en' ? 'Poor' : 'Dålig')),
+    (lang === 'en' ? '- Typography: ' : '- Typografi: ') + (design.typography.readable ? (lang === 'en' ? 'OK' : 'OK') : (lang === 'en' ? 'Poor' : 'Dålig')),
+    (lang === 'en' ? '- Hierarchy: ' : '- Hierarki: ') + (design.typography.hierarchy ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
+    (lang === 'en' ? '- Navigation: ' : '- Navigation: ') + (design.navigation.clear ? (lang === 'en' ? 'Yes' : 'Ja') : (lang === 'en' ? 'No' : 'Nej')),
   ];
 
   designItems.forEach(item => {
@@ -542,7 +554,7 @@ export async function generateReport(website: string, results: AnalysisResults):
 
   // Design Issues
   if (design.issues.length > 0) {
-    page4.drawText('FORBATTRINGSOMRADEN', {
+    page4.drawText(lang === 'en' ? 'AREAS FOR IMPROVEMENT' : 'FÖRBÄTTRINGSOMRÅDEN', {
       x: 50,
       y: yPos,
       size: 12,
@@ -574,7 +586,7 @@ export async function generateReport(website: string, results: AnalysisResults):
         color: colors.text,
       });
 
-      const recLines = splitTextIntoLines(`Rekommendation: ${issue.recommendation}`, 65);
+      const recLines = splitTextIntoLines((lang === 'en' ? 'Recommendation: ' : 'Rekommendation: ') + issue.recommendation, 65);
       page4.drawText(recLines[0].substring(0, 70), {
         x: 60,
         y: yPos - 30,
@@ -598,7 +610,7 @@ export async function generateReport(website: string, results: AnalysisResults):
     color: colors.primary,
   });
 
-  page5.drawText('Behoer du hjalp?', {
+  page5.drawText(lang === 'en' ? 'Need help?' : 'Behöver du hjälp?', {
     x: 50,
     y: height - 80,
     size: 28,
@@ -606,7 +618,7 @@ export async function generateReport(website: string, results: AnalysisResults):
     color: colors.white,
   });
 
-  page5.drawText('Vi hjalper dig implementera forbattringarna', {
+  page5.drawText(lang === 'en' ? 'We help you implement the improvements' : 'Vi hjälper dig implementera förbättringarna', {
     x: 50,
     y: height - 115,
     size: 13,
@@ -616,7 +628,7 @@ export async function generateReport(website: string, results: AnalysisResults):
 
   yPos = height - 220;
 
-  page5.drawText('Om PULSE by Athlas.io', {
+  page5.drawText(lang === 'en' ? 'About PULSE by Athlas.io' : 'Om PULSE by Athlas.io', {
     x: 50,
     y: yPos,
     size: 14,
@@ -625,11 +637,16 @@ export async function generateReport(website: string, results: AnalysisResults):
   });
 
   yPos -= 25;
-  const aboutLines = [
-    'Vi ar en nordisk tech- och kreativ byra med spetskompetens',
-    'inom utveckling, design, AI och digital marknadsforing.',
+  const aboutLines = lang === 'en' ? [
+    'We are a Nordic tech and creative agency with expertise',
+    'in engineering, design, AI and digital marketing.',
     '',
-    'Vi levererar snabbt, personligt och med hog kvalitet.'
+    'We deliver fast, personally and with high quality.'
+  ] : [
+    'Vi är en nordisk tech- och kreativ byrå med spetskompetens',
+    'inom utveckling, design, AI och digital marknadsföring.',
+    '',
+    'Vi levererar snabbt, personligt och med hög kvalitet.'
   ];
 
   aboutLines.forEach(line => {
@@ -645,7 +662,7 @@ export async function generateReport(website: string, results: AnalysisResults):
 
   yPos -= 20;
 
-  page5.drawText('KONTAKT', {
+  page5.drawText(lang === 'en' ? 'CONTACT' : 'KONTAKT', {
     x: 50,
     y: yPos,
     size: 12,
@@ -654,7 +671,7 @@ export async function generateReport(website: string, results: AnalysisResults):
   });
   yPos -= 18;
 
-  page5.drawText('E-post: hello@athlas.io', {
+  page5.drawText((lang === 'en' ? 'Email: ' : 'E-post: ') + 'hello@athlas.io', {
     x: 50,
     y: yPos,
     size: 11,
@@ -663,7 +680,7 @@ export async function generateReport(website: string, results: AnalysisResults):
   });
   yPos -= 15;
 
-  page5.drawText('Webb: athlas.io', {
+  page5.drawText((lang === 'en' ? 'Web: ' : 'Webb: ') + 'athlas.io', {
     x: 50,
     y: yPos,
     size: 11,

@@ -1,50 +1,52 @@
 import React from 'react';
 import { Container, Paper, Typography, Box } from '@mui/material';
+import { useI18n } from '@/contexts/I18nContext';
 
 const DataPolicyPage: React.FC = () => {
+  const { t } = useI18n();
   return (
     <Container maxWidth="md" sx={{ py: 8 }}>
       <Paper sx={{ p: { xs: 3, md: 6 } }}>
         <Typography variant="h3" component="h1" sx={{ mb: 2, fontWeight: 300 }}>
-          Datapolicy
+          {t('policy.title')}
         </Typography>
         <Typography variant="h6" sx={{ mb: 4, fontWeight: 400, color: 'text.secondary' }}>
-          Kort och tydligt om hur vi behandlar dina uppgifter
+          {t('policy.subtitle')}
         </Typography>
 
         <Box sx={{ mb: 3 }}>
           <Typography variant="h5" sx={{ mb: 1, fontWeight: 500 }}>
-            Vad samlar vi in?
+            {t('policy.whatCollect')}
           </Typography>
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            Namn, e-postadress och webbadress för att kunna genomföra analysen och leverera resultat.
+            {t('policy.whatCollectText')}
           </Typography>
         </Box>
 
         <Box sx={{ mb: 3 }}>
           <Typography variant="h5" sx={{ mb: 1, fontWeight: 500 }}>
-            Hur länge sparas uppgifterna?
+            {t('policy.howLong')}
           </Typography>
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            Vi sparar uppgifterna i högst 15 dagar. Därefter tas de automatiskt bort.
+            {t('policy.howLongText')}
           </Typography>
         </Box>
 
         <Box sx={{ mb: 3 }}>
           <Typography variant="h5" sx={{ mb: 1, fontWeight: 500 }}>
-            Vad används e-postadressen till?
+            {t('policy.emailUse')}
           </Typography>
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            För att skicka analysresultat och för att kunna kontakta dig med relevanta förslag.
+            {t('policy.emailUseText')}
           </Typography>
         </Box>
 
         <Box>
           <Typography variant="h5" sx={{ mb: 1, fontWeight: 500 }}>
-            Frågor?
+            {t('policy.questions')}
           </Typography>
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            Kontakta oss på hello@athlas.io.
+            {t('policy.questionsText')}
           </Typography>
         </Box>
       </Paper>

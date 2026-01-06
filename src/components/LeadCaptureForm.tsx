@@ -31,6 +31,7 @@ import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { getFirebaseDb } from '@/firebaseClient';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface FormData {
   name: string;
@@ -40,11 +41,12 @@ interface FormData {
 }
 
 interface Props {
-  onLeadCaptured: (data: FormData) => void;
+  onLeadCaptured: (data: FormData & { leadId?: string }) => void;
 }
 
 const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
   const theme = useTheme();
+  const { t } = useI18n();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     control,
@@ -79,12 +81,14 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
       try {
         new URL(normalizedWebsite);
       } catch {
-        toast.error('❌ Ogiltig webbadress - använd format: exempel.se', {
+        toast.error(t('leadForm.toastInvalidUrl'), {
           duration: 4000,
         });
         setIsSubmitting(false);
         return;
       }
+
+      let leadId: string | undefined;
 
       // Try API first
       try {
@@ -101,7 +105,7 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
 
         if (!response.ok) {
           const contentType = response.headers.get('content-type') || '';
-          let message = response.statusText || 'Något gick fel';
+          let message = response.statusText || 'Error';
           if (contentType.includes('application/json')) {
             const err = await response.json();
             message = err?.error || message;
@@ -111,32 +115,38 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
           }
           throw new Error(message);
         }
+
+        const resData = await response.json();
+        leadId = resData.leadId;
+
       } catch (apiErr) {
         // Fallback: write directly to Firestore (unauthenticated create allowed by rules)
         try {
           const db = getFirebaseDb();
-          await addDoc(collection(db, 'leads'), {
+          const ref = await addDoc(collection(db, 'leads'), {
             name: data.name.trim(),
             email: data.email.trim(),
             website: normalizedWebsite,
             consent: !!data.consent,
             timestamp: serverTimestamp(),
           });
+          leadId = ref.id;
         } catch (clientErr) {
           throw clientErr;
         }
       }
 
-      toast.success('✅ Tack! Analysen startar nu...', {
+      toast.success(t('leadForm.toastThanks'), {
         duration: 4000,
       });
       onLeadCaptured({
         ...data,
         website: normalizedWebsite,
+        leadId,
       });
     } catch (error: any) {
       console.error('Error capturing lead:', error);
-      toast.error(`❌ ${error.message || 'Något gick fel - försök igen'}`, {
+      toast.error(error.message || 'Error', {
         duration: 5000,
       });
     } finally {
@@ -147,15 +157,15 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
   const features = [
     {
       icon: <Analytics sx={{ color: 'primary.main' }} />,
-      text: 'Detaljerad analys inom 3 områden'
+      text: t('leadForm.features.0')
     },
     {
       icon: <Speed sx={{ color: 'primary.main' }} />,
-      text: 'Resultat på mindre än 5 minuter'
+      text: t('leadForm.features.1')
     },
     {
       icon: <Security sx={{ color: 'primary.main' }} />,
-      text: 'Säker och GDPR-anpassad'
+      text: t('leadForm.features.2')
     },
   ];
 
@@ -172,7 +182,7 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
           align="center"
           sx={{ mb: 2, fontWeight: 300, color: theme.palette.text.primary }}
         >
-          Kom igång med PULSE
+          {t('leadForm.heading')}
         </Typography>
         <Typography
           variant="h6"
@@ -180,7 +190,7 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
           align="center"
           sx={{ mb: 6, color: theme.palette.text.secondary, fontWeight: 400, lineHeight: 1.5 }}
         >
-          Fyll i dina uppgifter så analyserar vi din webbplats inom tillgänglighet, SEO och design
+          {t('leadForm.subheading')}
         </Typography>
 
         <Grid container spacing={6} alignItems="flex-start">
@@ -196,14 +206,14 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
                     name="name"
                     control={control}
                     rules={{
-                      required: 'Namn är obligatoriskt',
-                      minLength: { value: 2, message: 'Namnet måste vara minst 2 tecken' },
-                      maxLength: { value: 100, message: 'Namnet får inte vara längre än 100 tecken' },
+                      required: t('leadForm.nameRequired'),
+                      minLength: { value: 2, message: t('leadForm.nameMin') },
+                      maxLength: { value: 100, message: t('leadForm.nameMax') },
                     }}
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="Ditt namn"
+                        label={t('leadForm.nameLabel')}
                         variant="outlined"
                         fullWidth
                         error={!!errors.name}
@@ -228,21 +238,21 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
                     name="email"
                     control={control}
                     rules={{
-                      required: 'E-postadress är obligatoriskt',
+                      required: t('leadForm.emailRequired'),
                       pattern: {
                         value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                        message: 'Ange en giltig e-postadress',
+                        message: t('leadForm.emailInvalid'),
                       },
                     }}
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="E-postadress"
+                        label={t('leadForm.emailLabel')}
                         type="email"
                         variant="outlined"
                         fullWidth
                         error={!!errors.email}
-                        helperText={errors.email?.message || 'Vi skickar rapporten hit'}
+                        helperText={errors.email?.message || t('leadForm.emailHelper')}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
@@ -263,18 +273,18 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
                     name="website"
                     control={control}
                     rules={{
-                      required: 'Webbadress är obligatoriskt',
-                      minLength: { value: 4, message: 'Ange en giltig webbadress' },
+                      required: t('leadForm.websiteRequired'),
+                      minLength: { value: 4, message: t('leadForm.websiteMin') },
                     }}
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="Din webbplats"
+                        label={t('leadForm.websiteLabel')}
                         variant="outlined"
                         fullWidth
-                        placeholder="exempel.se eller https://www.exempel.se"
+                        placeholder={t('leadForm.websitePlaceholder')}
                         error={!!errors.website}
-                        helperText={errors.website?.message || 'Vi lägger till https:// automatiskt'}
+                        helperText={errors.website?.message || t('leadForm.websiteHelper')}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
@@ -295,17 +305,16 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
                 name="consent"
                 control={control}
                 rules={{
-                  validate: (v) => v || 'Du behöver godkänna vår datapolicy',
+                  validate: (v) => v || t('leadForm.consentError'),
                 }}
                 render={({ field }) => (
                   <FormControlLabel
                     control={<Checkbox {...field} checked={!!field.value} />}
                     label={
                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        Jag godkänner att Athlas behandlar mina uppgifter för att göra analysen,
-                        och att vi kan kontakta dig. Läs mer på{' '}
+                        {t('leadForm.consentTextPrefix')}{' '}
                         <Link href="/data-policy" passHref legacyBehavior>
-                          <MuiLink target="_blank" rel="noopener noreferrer">vår datapolicy</MuiLink>
+                          <MuiLink target="_blank" rel="noopener noreferrer">{t('leadForm.consentPolicy')}</MuiLink>
                         </Link>.
                       </Typography>
                     }
@@ -336,14 +345,14 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
                       minHeight: '56px',
                     }}
                   >
-                    {isSubmitting ? 'Startar analys...' : 'Analysera min webbplats gratis'}
+                    {isSubmitting ? t('leadForm.submitLoading') : t('leadForm.submitIdle')}
                   </LoadingButton>
 
                   <Alert 
                     severity="info"
                   >
                     <Typography variant="body2">
-                      <strong>Integritet:</strong> Vi sparar dina uppgifter i max 15 dagar och tar sedan bort dem.
+                      <strong>{t('leadForm.infoPrivacy')}</strong> {t('leadForm.infoPrivacyText')}
                     </Typography>
                   </Alert>
                 </Stack>
@@ -354,7 +363,7 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
           <Grid item xs={12} md={6}>
             <Box sx={{ pl: { md: 4 } }}>
               <Typography variant="h5" sx={{ mb: 4, fontWeight: 400, color: theme.palette.text.primary }}>
-                Vad får du?
+                {t('leadForm.whatYouGet')}
               </Typography>
               
               <Stack spacing={3}>
@@ -388,37 +397,37 @@ const LeadCaptureForm: React.FC<Props> = ({ onLeadCaptured }) => {
               <Box sx={{ height: '1px', backgroundColor: theme.palette.divider, my: 4 }} />
 
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, color: theme.palette.text.primary }}>
-                Analysområden
+                {t('leadForm.areasTitle')}
               </Typography>
               
               <Stack spacing={3}>
                 <Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 400, color: theme.palette.text.primary, mb: 1, display: 'flex', alignItems: 'center' }}>
                     <Box sx={{ mr: 2, width: 4, height: 4, backgroundColor: theme.palette.success.main, borderRadius: '50%' }} />
-                    Tillgänglighet
+                    {t('leadForm.areaAccessibility')}
                   </Typography>
                   <Typography variant="body2" sx={{ color: theme.palette.text.secondary, lineHeight: 1.6, ml: 3 }}>
-                    WCAG-compliance, skärmläsarstöd, tangentbordsnavigation
+                    {t('leadForm.areaAccessibilityDesc')}
                   </Typography>
                 </Box>
                 
                 <Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 400, color: theme.palette.text.primary, mb: 1, display: 'flex', alignItems: 'center' }}>
                     <Box sx={{ mr: 2, width: 4, height: 4, backgroundColor: theme.palette.warning.main, borderRadius: '50%' }} />
-                    SEO
+                    {t('leadForm.areaSeo')}
                   </Typography>
                   <Typography variant="body2" sx={{ color: theme.palette.text.secondary, lineHeight: 1.6, ml: 3 }}>
-                    Teknisk SEO, meta-taggar, laddningstider, mobilanpassning
+                    {t('leadForm.areaSeoDesc')}
                   </Typography>
                 </Box>
                 
                 <Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 400, color: theme.palette.text.primary, mb: 1, display: 'flex', alignItems: 'center' }}>
                     <Box sx={{ mr: 2, width: 4, height: 4, backgroundColor: theme.palette.primary.main, borderRadius: '50%' }} />
-                    Design & UX
+                    {t('leadForm.areaDesign')}
                   </Typography>
                   <Typography variant="body2" sx={{ color: theme.palette.text.secondary, lineHeight: 1.6, ml: 3 }}>
-                    Responsiv design, navigation, typografi, användarupplevelse
+                    {t('leadForm.areaDesignDesc')}
                   </Typography>
                 </Box>
               </Stack>

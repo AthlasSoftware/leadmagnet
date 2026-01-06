@@ -4,6 +4,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Toaster } from 'react-hot-toast';
 import Head from 'next/head';
 import { ThemeModeProvider, useThemeMode } from '@/contexts/ThemeContext';
+import { I18nProvider, useI18n } from '@/contexts/I18nContext';
 import { useMemo } from 'react';
 
 const getTheme = (mode: 'light' | 'dark') => createTheme({
@@ -211,6 +212,7 @@ const getTheme = (mode: 'light' | 'dark') => createTheme({
 function AppContent({ Component, pageProps }: AppProps) {
   const { mode } = useThemeMode();
   const theme = useMemo(() => getTheme(mode), [mode]);
+  const { t } = useI18n();
 
   return (
     <ThemeProvider theme={theme}>
@@ -260,21 +262,18 @@ export default function App(props: AppProps) {
     <>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="PULSE by Athlas.io - Gratis webbanalys. Få en professionell rapport om din webbplats prestanda inom tillgänglighet, SEO och design" />
-        <meta name="keywords" content="webbanalys, SEO, tillgänglighet, webbdesign, PULSE, Athlas, gratis, AI-analys" />
+        {/* Dynamic meta set in I18nHead below */}
         <meta name="author" content="PULSE by Athlas.io" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://pulse.athlas.io/" />
-        <meta property="og:title" content="PULSE by Athlas.io - Gratis Webbanalys" />
-        <meta property="og:description" content="Få en professionell rapport om din webbplats prestanda inom tillgänglighet, SEO och design" />
+        {/* Dynamic OG set in I18nHead below */}
         <meta property="og:site_name" content="PULSE by Athlas.io" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="PULSE by Athlas.io - Gratis Webbanalys" />
-        <meta name="twitter:description" content="Få en professionell rapport om din webbplats prestanda inom tillgänglighet, SEO och design" />
+        {/* Dynamic Twitter set in I18nHead below */}
         
         {/* Favicons */}
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -286,11 +285,29 @@ export default function App(props: AppProps) {
         <meta name="msapplication-TileColor" content="#2563eb" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
         
-        <title>PULSE by Athlas.io - Gratis Webbanalys</title>
+        {/* Title set in I18nHead below */}
       </Head>
-      <ThemeModeProvider>
-        <AppContent {...props} />
-      </ThemeModeProvider>
+      <I18nProvider>
+        <I18nHead />
+        <ThemeModeProvider>
+          <AppContent {...props} />
+        </ThemeModeProvider>
+      </I18nProvider>
     </>
+  );
+}
+
+function I18nHead() {
+  const { t } = useI18n();
+  return (
+    <Head>
+      <title>{t('meta.title')}</title>
+      <meta name="description" content={t('meta.description')} />
+      <meta name="keywords" content={t('meta.keywords')} />
+      <meta property="og:title" content={t('meta.ogTitle')} />
+      <meta property="og:description" content={t('meta.ogDescription')} />
+      <meta name="twitter:title" content={t('meta.twitterTitle')} />
+      <meta name="twitter:description" content={t('meta.twitterDescription')} />
+    </Head>
   );
 }

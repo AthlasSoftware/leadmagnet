@@ -5,7 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { analyzeWebsite } from './services/websiteAnalyzer';
-import { saveLead } from './services/leadService';
+import { saveLead, updateLeadScore } from './services/leadService';
 import { generateReport } from './services/reportGenerator';
 import { sendEmailReport } from './services/emailService';
 import dns from 'dns/promises';
@@ -136,15 +136,23 @@ router.post('/verify-domain', rateLimitMiddleware, async (req, res) => {
 // Analyze
 router.post('/analyze-website', rateLimitMiddleware, async (req, res) => {
 	try {
-		const { website, sessionId } = req.body;
+		const { website, sessionId, lang, leadId } = req.body;
 		if (!website) return res.status(400).json({ error: 'Website URL is required' });
 		let normalizedUrl = website.trim();
 		if (!normalizedUrl.startsWith('http')) normalizedUrl = 'https://' + normalizedUrl;
 		try { new URL(normalizedUrl); } catch { return res.status(400).json({ error: 'Please provide a valid website URL' }); }
 		const defaultMode = (process.env.DEFAULT_ANALYSIS_MODE as any) || 'deep';
-		const results = await analyzeWebsite(normalizedUrl, { mode: defaultMode });
+		const results = await analyzeWebsite(normalizedUrl, { mode: defaultMode, lang: (lang === 'en' ? 'en' : 'sv') as any });
 		if (sessionId) {
 			await admin.firestore().collection('analyses').add({ sessionId, website: normalizedUrl, results, timestamp: admin.firestore.FieldValue.serverTimestamp() });
+		}
+		if (leadId) {
+			await updateLeadScore(leadId, {
+				score: results.overview.overallScore,
+				seoScore: results.seo.score,
+				accessibilityScore: results.accessibility.score,
+				designScore: results.design.score
+			});
 		}
 		return res.status(200).json({ success: true, results });
 	} catch (error) {
@@ -156,9 +164,9 @@ router.post('/analyze-website', rateLimitMiddleware, async (req, res) => {
 // Report
 router.post('/generate-report', rateLimitMiddleware, async (req, res) => {
 	try {
-		const { website, results, email } = req.body;
+		const { website, results, email, lang } = req.body;
 		if (!website || !results) return res.status(400).json({ error: 'Website and analysis results are required' });
-		const reportBuffer = await generateReport(website, results);
+		const reportBuffer = await generateReport(website, results, (lang === 'en' ? 'en' : 'sv') as any);
 		if (email) await sendEmailReport(email, website, reportBuffer);
 		res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="athlas-website-analysis-${new Date().toISOString().split('T')[0]}.pdf"`, 'Content-Length': reportBuffer.length });
 		return res.send(reportBuffer);
@@ -203,3 +211,4 @@ export const scheduledCleanup = functions
     }
     return null;
   });
+

@@ -11,8 +11,8 @@ service cloud.firestore {
       allow create: if request.auth == null 
         && isValidLead(request.resource.data)
         && resource == null;
-      // Admins may read leads
-      allow read: if isAdmin();
+      // Admins may read, update, and delete leads
+      allow read, update, delete: if isAdmin();
     }
     
     // Allow reading and writing to analysis results with rate limiting

@@ -111,3 +111,23 @@ export async function getLeadStats(): Promise<{
     throw new Error('Failed to retrieve lead statistics');
   }
 }
+
+export async function updateLeadScore(leadId: string, scores: {
+  score: number;
+  seoScore: number;
+  accessibilityScore: number;
+  designScore: number;
+}): Promise<void> {
+  try {
+    await admin.firestore().collection('leads').doc(leadId).update({
+      score: scores.score,
+      seoScore: scores.seoScore,
+      accessibilityScore: scores.accessibilityScore,
+      designScore: scores.designScore,
+      lastActivity: admin.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (error) {
+    console.error(`Error updating scores for lead ${leadId}:`, error);
+    // Don't throw, just log. This is a non-critical update compared to capturing the lead.
+  }
+}

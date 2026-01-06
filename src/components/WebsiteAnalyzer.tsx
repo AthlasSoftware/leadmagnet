@@ -26,10 +26,12 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { AnalysisResults } from '@/types/analysis';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface Props {
   website: string;
   email: string;
+  leadId?: string;
   onAnalysisComplete: (results: AnalysisResults) => void;
   onStartOver: () => void;
 }
@@ -37,23 +39,25 @@ interface Props {
 const WebsiteAnalyzer: React.FC<Props> = ({ 
   website, 
   email, 
+  leadId,
   onAnalysisComplete, 
   onStartOver 
 }) => {
   const theme = useTheme();
+  const { t, lang } = useI18n() as any;
   const [currentStep, setCurrentStep] = useState<string>('starting');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [sessionId] = useState(() => Math.random().toString(36).substr(2, 9));
 
   const analysisSteps = [
-    { key: 'starting', label: 'Startar analys...', icon: <Refresh />, duration: 1000 },
-    { key: 'loading', label: 'Laddar webbsidan...', icon: <Refresh />, duration: 2000 },
-    { key: 'accessibility', label: 'Analyserar tillgänglighet...', icon: <AccessibilityNew />, duration: 3000 },
-    { key: 'seo', label: 'Kontrollerar SEO...', icon: <Search />, duration: 2500 },
-    { key: 'design', label: 'Utvärderar design & UX...', icon: <Palette />, duration: 2000 },
-    { key: 'finalizing', label: 'Slutför rapporten...', icon: <CheckCircle />, duration: 1500 },
-    { key: 'complete', label: 'Analysen är klar!', icon: <CheckCircle />, duration: 0 },
+    { key: 'starting', label: t('analyzer.steps.starting'), icon: <Refresh />, duration: 1000 },
+    { key: 'loading', label: t('analyzer.steps.loading'), icon: <Refresh />, duration: 2000 },
+    { key: 'accessibility', label: t('analyzer.steps.accessibility'), icon: <AccessibilityNew />, duration: 3000 },
+    { key: 'seo', label: t('analyzer.steps.seo'), icon: <Search />, duration: 2500 },
+    { key: 'design', label: t('analyzer.steps.design'), icon: <Palette />, duration: 2000 },
+    { key: 'finalizing', label: t('analyzer.steps.finalizing'), icon: <CheckCircle />, duration: 1500 },
+    { key: 'complete', label: t('analyzer.steps.complete'), icon: <CheckCircle />, duration: 0 },
   ];
 
   const getTotalDuration = () => {
@@ -73,8 +77,8 @@ const WebsiteAnalyzer: React.FC<Props> = ({
         // eslint-disable-next-line no-new
         new URL(website);
       } catch {
-        setError('Ogiltig webbadress. Kontrollera URL:en och försök igen.');
-        toast.error('❌ Ogiltig webbadress - kontrollera formatet', {
+        setError(t('analyzer.errors.invalidUrl'));
+        toast.error(t('analyzer.toast.invalidUrl'), {
           duration: 4000,
         });
         return;
@@ -89,7 +93,7 @@ const WebsiteAnalyzer: React.FC<Props> = ({
         });
         const contentType = verifyRes.headers.get('content-type') || '';
         if (!verifyRes.ok) {
-          let message = verifyRes.statusText || 'Kunde inte verifiera domänen';
+          let message = verifyRes.statusText || t('analyzer.errors.verifyFailed');
           if (contentType.includes('application/json')) {
             const err = await verifyRes.json();
             message = err?.error || message;
@@ -101,23 +105,23 @@ const WebsiteAnalyzer: React.FC<Props> = ({
         }
         const vr = await verifyRes.json();
         if (!vr?.dnsResolved) {
-          setError('Domänen kunde inte hittas. Kontrollera stavningen och försök igen.');
-          toast.error('🌐 Domänen hittades inte - kontrollera stavningen', {
+          setError(t('analyzer.errors.domainNotFound'));
+          toast.error(t('analyzer.toast.domainNotFound'), {
             duration: 5000,
           });
           return;
         }
         if (vr?.httpReachable === false) {
-          setError('Domänen hittades men webbplatsen kunde inte nås just nu. Försök igen senare.');
-          toast.error('⚠️ Webbplatsen är inte nåbar för tillfället', {
+          setError(t('analyzer.errors.siteUnreachable'));
+          toast.error(t('analyzer.toast.siteUnreachable'), {
             duration: 5000,
           });
           return;
         }
       } catch (e: any) {
-        const msg = String(e?.message || 'Kunde inte verifiera domänen');
+        const msg = String(e?.message || t('analyzer.errors.verifyFailed'));
         setError(msg);
-        toast.error(`❌ ${msg}`, {
+        toast.error(msg, {
           duration: 5000,
         });
         return;
@@ -162,12 +166,12 @@ const WebsiteAnalyzer: React.FC<Props> = ({
           'Content-Type': 'application/json',
           'X-Session-ID': sessionId,
         },
-        body: JSON.stringify({ website, sessionId }),
+        body: JSON.stringify({ website, sessionId, lang, leadId }),
       });
 
       if (!response.ok) {
         const contentType = response.headers.get('content-type') || '';
-        let message = response.statusText || 'Kunde inte analysera webbplatsen';
+        let message = response.statusText || t('analyzer.errors.analyzeFailed');
         if (contentType.includes('application/json')) {
           const err = await response.json();
           message = err?.error || message;
@@ -190,16 +194,16 @@ const WebsiteAnalyzer: React.FC<Props> = ({
           const url = new URL(website);
           const isAthlas = url.hostname.replace(/^www\./, '') === 'athlas.io';
           if (isAthlas) {
-            toast.success('🥳 Athlas.io? Den sidan är redan perfekt! 100/100 😉', {
+            toast.success(t('analyzer.toast.athlasPerfect'), {
               duration: 7000,
             });
           } else {
-            toast.success('🎉 Analys klar! Du kan ladda ner din PDF-rapport.', {
+            toast.success(t('analyzer.toast.analysisDone'), {
               duration: 6000,
             });
           }
         } catch {
-          toast.success('🎉 Analys klar! Du kan ladda ner din PDF-rapport.', {
+          toast.success(t('analyzer.toast.analysisDone'), {
             duration: 6000,
           });
         }
@@ -207,15 +211,15 @@ const WebsiteAnalyzer: React.FC<Props> = ({
 
     } catch (error: any) {
       console.error('Analysis error:', error);
-      const msg = String(error?.message || error || 'Något gick fel under analysen');
+      const msg = String(error?.message || error || t('analyzer.errors.generic'));
       if (msg.includes('429')) {
-        setError('För många förfrågningar. Vänta ett par minuter och försök igen.');
-        toast.error('⏱️ För många analyser - vänta några minuter', {
+        setError(t('analyzer.errors.rateLimited'));
+        toast.error(t('analyzer.toast.tooManyRequests'), {
           duration: 6000,
         });
       } else {
         setError(msg);
-        toast.error('❌ Analysen misslyckades - försök igen', {
+        toast.error(t('analyzer.toast.analysisFailed'), {
           duration: 5000,
         });
       }
@@ -247,7 +251,7 @@ const WebsiteAnalyzer: React.FC<Props> = ({
           <Paper sx={{ p: 4, textAlign: 'center' }}>
             <ErrorIcon sx={{ fontSize: 64, color: theme.palette.error.main, mb: 3 }} />
             <Typography variant="h4" sx={{ mb: 2, color: theme.palette.error.main, fontWeight: 400 }}>
-              Analysen misslyckades
+              {t('analyzer.errorTitle')}
             </Typography>
             <Typography variant="body1" sx={{ mb: 4, color: theme.palette.text.secondary }}>
               {error}
@@ -258,14 +262,14 @@ const WebsiteAnalyzer: React.FC<Props> = ({
                 startIcon={<Refresh />}
                 onClick={retryAnalysis}
               >
-                Försök igen
+                {t('common.tryAgain')}
               </Button>
               <Button
                 variant="outlined"
                 startIcon={<ArrowBack />}
                 onClick={onStartOver}
               >
-                Tillbaka
+                {t('common.back')}
               </Button>
             </Stack>
           </Paper>
@@ -275,134 +279,167 @@ const WebsiteAnalyzer: React.FC<Props> = ({
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <Paper sx={{ p: { xs: 3, md: 6 } }}>
-          <Typography
-            variant="h4"
-            component="h2"
-            align="center"
-            sx={{ mb: 2, fontWeight: 300, color: theme.palette.text.primary }}
-          >
-            PULSE analyserar din webbplats
-          </Typography>
-          
-          <Typography
-            variant="h6"
-            align="center"
-            sx={{ mb: 6, color: theme.palette.text.secondary, fontWeight: 400 }}
-          >
-            {website}
-          </Typography>
+    <Box sx={{ 
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.palette.background.default,
+      py: 4
+    }}>
+      <Container maxWidth="sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Current step animation */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Box sx={{ mb: 4 }}>
+                  {currentStepData?.icon && React.cloneElement(currentStepData.icon, {
+                    sx: { 
+                      fontSize: 64, 
+                      color: theme.palette.primary.main,
+                      filter: theme.palette.mode === 'light' ? 'none' : 'drop-shadow(0 0 12px rgba(255, 255, 255, 0.3))'
+                    }
+                  })}
+                </Box>
+              </motion.div>
+            </AnimatePresence>
 
-          {/* Progress bar */}
-          <Box sx={{ mb: 6 }}>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              sx={{
-                height: 2,
-                borderRadius: 0,
-                backgroundColor: theme.palette.divider,
-                '& .MuiLinearProgress-bar': {
-                  backgroundColor: theme.palette.primary.main,
-                  borderRadius: 0,
-                },
-              }}
-            />
+            {/* Website */}
             <Typography
               variant="body2"
-              align="center"
-              sx={{ mt: 2, color: theme.palette.text.secondary, fontSize: '0.85rem' }}
+              sx={{ 
+                mb: 1, 
+                color: theme.palette.text.secondary,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                fontWeight: 500
+              }}
             >
-              {Math.round(progress)}% slutfört
+              {t('analyzer.title')}
             </Typography>
-          </Box>
-
-          {/* Current step */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
+            
+            <Typography
+              variant="h5"
+              sx={{ mb: 4, color: theme.palette.text.primary, fontWeight: 300 }}
             >
-              <Card
-                sx={{
-                  mb: 6,
-                }}
-              >
-                <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                  <Box sx={{ mb: 3 }}>
-                    {currentStepData?.icon && React.cloneElement(currentStepData.icon, {
-                      sx: { fontSize: 32, color: theme.palette.primary.main }
-                    })}
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 400, color: theme.palette.text.primary }}>
-                    {currentStepData?.label}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </AnimatePresence>
+              {website}
+            </Typography>
 
-          {/* Step indicators */}
-          <Grid container spacing={1} sx={{ mb: 4 }}>
-            {analysisSteps.slice(0, -1).map((step, index) => (
-              <Grid item xs key={step.key}>
-                <Chip
-                  icon={React.cloneElement(step.icon, { sx: { fontSize: '16px !important' } })}
-                  label={step.label.replace('...', '')}
-                  size="small"
-                  variant={index <= currentStepIndex ? 'filled' : 'outlined'}
-                  color={index < currentStepIndex ? 'success' : index === currentStepIndex ? 'primary' : 'default'}
-                  sx={{
-                    width: '100%',
-                    fontSize: { xs: '0.7rem', sm: '0.8rem' },
-                    '& .MuiChip-label': {
-                      px: { xs: 0.5, sm: 1 },
-                    },
+            {/* Minimal progress */}
+            <Box sx={{ mb: 2, px: 4 }}>
+              <Box sx={{ 
+                height: 1, 
+                backgroundColor: theme.palette.divider,
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.3 }}
+                  style={{
+                    height: '100%',
+                    backgroundColor: theme.palette.primary.main,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
                   }}
                 />
-              </Grid>
-            ))}
-          </Grid>
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{ 
+                  mt: 1.5, 
+                  color: theme.palette.text.secondary,
+                  fontSize: '0.7rem',
+                  display: 'block'
+                }}
+              >
+                {Math.round(progress)}{t('analyzer.progressSuffix')}
+              </Typography>
+            </Box>
 
-          {/* Info section */}
-          <Alert 
-            severity="info"
-          >
-            <Typography variant="body2">
-              <strong>Vad händer nu?</strong> Vi går igenom din webbplats med automatiserade verktyg 
-              som kontrollerar över 100 olika faktorer inom tillgänglighet, SEO och design. 
-              Analysen tar normalt 2-5 minuter att genomföra.
-            </Typography>
-          </Alert>
+            {/* Current step label */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    mb: 6,
+                    color: theme.palette.text.primary,
+                    fontWeight: 400,
+                    minHeight: 28
+                  }}
+                >
+                  {currentStepData?.label}
+                </Typography>
+              </motion.div>
+            </AnimatePresence>
 
-          {/* Back button */}
-          <Box sx={{ textAlign: 'center', mt: 4 }}>
+            {/* Minimal step dots */}
+            <Stack 
+              direction="row" 
+              spacing={1.5} 
+              justifyContent="center"
+              sx={{ mb: 6 }}
+            >
+              {analysisSteps.slice(0, -1).map((step, index) => (
+                <Box
+                  key={step.key}
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    backgroundColor: index <= currentStepIndex 
+                      ? theme.palette.primary.main 
+                      : theme.palette.divider,
+                    transition: 'all 0.3s ease',
+                    transform: index === currentStepIndex ? 'scale(1.3)' : 'scale(1)',
+                  }}
+                />
+              ))}
+            </Stack>
+
+            {/* Cancel button - minimal */}
             <Button
-              variant="outlined"
-              startIcon={<ArrowBack />}
+              variant="text"
+              startIcon={<ArrowBack sx={{ fontSize: '16px !important' }} />}
               onClick={onStartOver}
               disabled={currentStep === 'complete'}
               sx={{
-                minHeight: '48px',
-                px: 3,
+                color: theme.palette.text.secondary,
+                fontSize: '0.8rem',
                 fontWeight: 400,
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  color: theme.palette.text.primary,
+                },
               }}
             >
-              Avbryt och börja om
+              {t('analyzer.cancelAndStartOver')}
             </Button>
           </Box>
-        </Paper>
-      </motion.div>
-    </Container>
+        </motion.div>
+      </Container>
+    </Box>
   );
 };
 

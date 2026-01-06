@@ -3,13 +3,15 @@ import { IconButton, Tooltip, useTheme } from '@mui/material';
 import { Lightbulb, LightbulbOutlined } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useThemeMode } from '@/contexts/ThemeContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 const ThemeToggle: React.FC = () => {
   const { mode, toggleTheme } = useThemeMode();
   const theme = useTheme();
+  const { t } = useI18n();
 
   return (
-    <Tooltip title={mode === 'light' ? 'Mörkare tema' : 'Ljusare tema'} arrow>
+    <Tooltip title={mode === 'light' ? t('themeToggle.darker') : t('themeToggle.lighter')} arrow>
       <IconButton
         onClick={toggleTheme}
         sx={{
